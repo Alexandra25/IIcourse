@@ -24,7 +24,7 @@ def function1(new):
                 lemma = res.group(2)
                 sql_file.write ('INSERT INTO Lemmas (id, slovoforma, lemma) VALUES (' + str(i) + ',\'' + word + ',\'' + ',\'' + ',' + lemma + ');\n')
                 i += 1
-    f.close
+
     sql_file.close
     return dictionary
             
