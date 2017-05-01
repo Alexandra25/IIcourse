@@ -1,0 +1,53 @@
+import json
+import re
+import matplotlib.pyplot as plt
+import urllib.request
+import sys
+non_bmp_map = dict.fromkeys(range(0x10000, sys.maxunicode + 1), 0xfffd)
+
+posts = open ('posts.txt', 'w', encoding='utf-8')
+comments = open ('comments.txt', 'w', encoding='utf-8')
+dict_post_comment = {}
+
+req = urllib.request.Request('https://api.vk.com/method/wall.get?domain=meduzaproject&count=100') 
+response = urllib.request.urlopen(req)
+result = response.read().decode('utf-8')
+
+data = json.loads(result)
+gruppa_id = '-76982440'
+for i in range(1, 101):
+    number_of_posts = data['response'][i]['id'] 
+    text = data['response'][i]['text'].translate(non_bmp_map)
+    posts.write(str(number_of_posts) + ' ' + text)
+    lenght_of_posts = len(text.split())
+    
+    req_comments = urllib.request.Request('https://api.vk.com/method/wall.getComments?owner_id='+ gruppa_id + '&post_id=' +str(number_of_posts) + '&count=100')
+    response_comments = urllib.request.urlopen(req_comments)
+    result_comments = response_comments.read().decode('utf-8')
+    result_comments = json.loads(result_comments)
+    #print (type(result_comments))
+    #print (result_comments['response'])
+    for g in range(1, len(result_comments['response'])):
+        id_of_users = result_comments['response'][g]['uid'] 
+        text = result_comments['response'][g]['text'].translate(non_bmp_map)
+        comments.write(str(number_of_posts) + ' ' + text)
+        lenght_of_comments = len(text.split())
+        #print(lenght_of_posts, ' ', lenght_of_comments)
+        if lenght_of_posts in dict_post_comment:
+            dict_post_comment[lenght_of_posts].append(lenght_of_comments)
+        else:
+            dict_post_comment[lenght_of_posts] = [lenght_of_comments]
+#print (dict_post_comment)
+X = [key for key in sorted (dict_post_comment)]
+Y = []
+for x in X:
+    summa = 0
+    for i in dict_post_comment[x]:
+        summa += i
+    Y.append (summa/len(dict_post_comment[x]))
+
+plt.title('График соотношения длины поста со средней длиной комментария')
+plt.ylabel('Средняя длина комментария')
+plt.xlabel('Длина поста')
+plt.plot(X,Y)
+plt.show()
